@@ -14,8 +14,8 @@ does nothing).
   Remote PC  use the Ollama of another computer instead of the local one
              (skai_remote.py forwards 127.0.0.1:11434 to it).
 
-Every Skorpion app uses the BIGGEST installed model, so one model at a
-time is enough: the app warns about that before every download."""
+Every Skorpion app uses the installed model with the MOST PARAMETERS, so
+one model at a time is enough: the app warns about that before every download."""
 
 import os
 import re
@@ -88,7 +88,7 @@ MODELS = [
 BADGE_IDS = ["badge_light", "badge_balanced", "badge_default", "badge_advanced", "badge_max"]
 
 ONE_MODEL_NOTE = (
-    "The whole Skorpion suite always uses the <b>biggest</b> installed model. "
+    "The whole Skorpion suite always uses the installed model with the <b>most parameters</b>. "
     "Keeping more than one model only takes disk space, and a smaller model "
     "downloaded next to a bigger one is never used. To move to a smaller model, "
     "remove the bigger one."
@@ -124,8 +124,11 @@ def short_name(name: str) -> str:
 
 
 def best_model(models):
-    """The model every Skorpion app picks: the biggest one (see launcher.py)."""
-    return max(models, key=lambda m: m.get("size", 0)) if models else None
+    """The model every Skorpion app picks: the one with the most parameters
+    (skcommon.biggest_model). A model not downloaded yet has no parameter
+    count, so the download questions below compare sizes on disk instead:
+    within one family (Qwen 2.5) that is the same order."""
+    return skcommon.biggest_model(models)
 
 
 def run(argv, timeout=30, input_text=None):
@@ -184,7 +187,8 @@ def api_version(base, timeout=4):
 def api_models(base, timeout=6):
     r = requests.get(f"{base}/api/tags", timeout=timeout)
     r.raise_for_status()
-    return [{"name": m.get("name") or m.get("model", "?"), "size": m.get("size", 0)}
+    return [{"name": m.get("name") or m.get("model", "?"), "size": m.get("size", 0),
+             "details": m.get("details") or {}}
             for m in r.json().get("models", [])]
 
 
@@ -1353,7 +1357,7 @@ class SkaiManager(QtWidgets.QWidget):
                 f"<b>{html.escape(nice)}</b> ({size_txt}) is smaller than "
                 f"<b>{html.escape(short_name(best['name']))}</b> ({human_size(best['size'])}), "
                 "the model you use now.<br><br>"
-                "The whole Skorpion suite always uses the <b>biggest</b> installed model, so "
+                "The whole Skorpion suite always uses the installed model with the <b>most parameters</b>, so "
                 f"{html.escape(nice)} would never be used while {html.escape(bigger_txt)} "
                 "is installed.<br><br>"
                 f"<b>Replace</b> downloads {html.escape(nice)} and then removes "
@@ -1374,7 +1378,7 @@ class SkaiManager(QtWidgets.QWidget):
             if self.choose(
                     "Download",
                     f"Download <b>{html.escape(nice)}</b> ({size_txt})?<br><br>{bigger_note}"
-                    "<br><br>The Skorpion suite always uses only the biggest model: keeping "
+                    "<br><br>The Skorpion suite always uses only the model with the most parameters: keeping "
                     f"{html.escape(others)} too is useless, you will be offered to remove "
                     "it when the download is done.",
                     [("Download", QtWidgets.QMessageBox.ButtonRole.AcceptRole),
