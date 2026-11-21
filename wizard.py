@@ -23,41 +23,15 @@ from PySide6.QtGui import QFont, QColor, QPalette, QGuiApplication
 
 
 # ─────────────────────────── COLORS ────────────────────────────
-PALETTES = {
-    "dark": dict(
-        BG="#0d0d0d", BG2="#141414", ACCENT="#e05c00", ACCENT2="#ff7a1a",
-        TEXT="#e8e8e8", TEXT_DIM="#666666", GREEN="#39d353", RED="#ff4444",
-        BORDER="#2a2a2a", ON_ACCENT="#000000", DISABLED="#333333",
-        BLUE="#4da6ff", PURPLE="#cc88ff", PINK="#ff6666",
-    ),
-    "light": dict(
-        BG="#f6f4f1", BG2="#ffffff", ACCENT="#c75200", ACCENT2="#e05c00",
-        TEXT="#1a1a1a", TEXT_DIM="#77716b", GREEN="#1a7f37", RED="#cf222e",
-        BORDER="#d9d3cb", ON_ACCENT="#ffffff", DISABLED="#e3ded7",
-        BLUE="#0b63c5", PURPLE="#8250df", PINK="#c93c3c",
-    ),
-}
+# The Skorpion palettes and the theme file shared with the launcher live in skcommon.py, next to this file.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from skcommon import PALETTES as _SK_PALETTES, load_theme, save_theme  # noqa: E402  pylint: disable=wrong-import-position
 
-# Same file as the Skorpion launcher, so both use the same theme
-THEME_FILE = os.path.expanduser("~/.config/pylauncher_settings/theme_config.json")
-
-
-def load_theme() -> str:
-    try:
-        with open(THEME_FILE, "r", encoding="utf-8") as f:
-            theme = json.load(f).get("theme", "dark")
-        return theme if theme in PALETTES else "dark"
-    except Exception:
-        return "dark"
-
-
-def save_theme(theme: str):
-    try:
-        os.makedirs(os.path.dirname(THEME_FILE), exist_ok=True)
-        with open(THEME_FILE, "w", encoding="utf-8") as f:
-            json.dump({"theme": theme}, f)
-    except Exception:
-        pass
+# skcommon key -> the name this file uses
+_NAMES = {"BG": "bg", "BG2": "bg2", "ACCENT": "accent", "ACCENT2": "accent2", "TEXT": "text", "TEXT_DIM": "dim",
+          "GREEN": "green", "RED": "red", "BORDER": "border", "ON_ACCENT": "on_accent", "DISABLED": "disabled",
+          "BLUE": "blue", "PURPLE": "purple", "PINK": "pink"}
+PALETTES = {theme: {name: colours[key] for name, key in _NAMES.items()} for theme, colours in _SK_PALETTES.items()}
 
 
 THEME = "dark"
